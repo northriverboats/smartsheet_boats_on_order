@@ -715,9 +715,7 @@ def process_row(dealer, row):
         cell = dealer['wsOld'].cell(column=column.info['old'], row=row)
         column.info['text'] = fetch_value(cell) 
         column.run()
-        # if original cell background is FF00CA set new cell as well
-        if cell.fill.start_color.index == 'FF00CA0E':
-            column.info['bg_color'] = 'FF00CA0E'
+
     for column in dealer['columns']:
         cell = dealer['wsNew'].cell(column=column.info['new'], row=row+dealer['base']+dealer['offset'])
         cell.value = column.info['text']
