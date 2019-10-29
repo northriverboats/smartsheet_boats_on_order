@@ -194,6 +194,12 @@ clm_g = Column(7, 7, 'Current Phase', current_phase)
 clm_h = Column(8, 8, 'Est Start/Finish', start_finish)
 clm_i = Column(11, 9, 'Notes', noop)
 
+# =========================================================
+# all dealer column defintions
+# =========================================================
+all_b = Column(3, 2, 'Boat Model', boat_model)
+all_c = Column(4, 3, 'Package', noop)
+all_d = Column(12, 4, 'Colors    Interior / Exterior', colors_interior)
 
 # =========================================================
 # dealership definitions
@@ -209,9 +215,9 @@ reports = {
         'break2': 56,
         'columns': [
             col_a,
-            col_b,
-            col_c,
-            col_d,
+            all_b,
+            all_c,
+            all_d,
             col_e,
             col_f,
             col_g,
@@ -833,7 +839,8 @@ def process_sheet_to_xlsx(dealer):
 def process_sheets(dealers, excel, pdf):
     log("\nPROCESS SHEETS ===============================")
     os.chdir(source_dir + 'downloads/')
-    for dealer in dealers.values():
+    for dlr in sorted(dealers):
+        dealer = dealers[dlr]
         # check if file exists
         if pdf:
             log("  converting %s to pdf" % (dealer['report']))
@@ -847,7 +854,8 @@ def download_sheets(dealers):
     smart = smartsheet.Smartsheet(api)
     smart.assume_user(os.getenv('SMARTSHEET_USER'))
     log("DOWNLOADING SHEETS ===========================")
-    for dealer in dealers.values():
+    for dlr in sorted(dealers):
+        dealer = dealers[dlr]
         log("  downloading sheet: " + dealer['report'])
         try:
             smart.Reports.get_report_as_excel(dealer['id'], source_dir + 'downloads')
@@ -858,6 +866,7 @@ def download_sheets(dealers):
 def send_error_report():
     subject = 'Smartsheet Boats on Order Error Report'
     mail_results(subject, log_text)
+
 
 def main(dealers, download, excel, pdf):
     global api, source_dir, target_dir, rollover, one_date_fmt, two_date_fmt
