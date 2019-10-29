@@ -26,50 +26,10 @@ from dotenv import load_dotenv
 from emailer import *
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
-# Everybody Loves Globals
-log_text = ""
-errors = False
-# titles = []
-# order_details = 0 
-# row_offset = 0
-# max_column = 0
-# template_file = ''
-# clemens = 0
-# page_number = 0
-
-
-
-# =========================================================
-# helper functions
-# =========================================================
-def log(text, error=None):
-    global log_text, errors
-    print(text)
-    log_text += text + "\n"
-    if (error):
-        errors = True
-
-def mail_results(subject, body):
-    mFrom = os.getenv('MAIL_FROM')
-    mTo = os.getenv('MAIL_TO')
-    m = Email(os.getenv('MAIL_SERVER'))
-    m.setFrom(mFrom)
-    m.addRecipient(mTo)
-    m.addCC(os.getenv('MAIL_ALSO'))
-   
-    m.setSubject(subject)
-    m.setTextBody("You should not see this text in a MIME aware reader")
-    m.setTextBody("You should not see this text in a MIME aware reader")
-    m.setHtmlBody('<pre>\n' + body + '</pre>\n')
-    m.send()
-
 
 # =========================================================
 # column class for formatting rules
 # =========================================================
-def noop(info):
-    return info
-
 class Column:
     name = 'Arial'
     size = '9'
@@ -112,10 +72,16 @@ class Column:
        self.info = self.function(self.info) 
 
 
+def noop(info):
+    """
+    default do nothing column
+    """
+    return info
+
+
 def boat_model(info):
     """
-    Change background color on OS and HardTops
-    Mods super() to affect all columns that do
+    Change background color on OS and HardTops Mods super() to affect all columns that do
     not have individual overrides
     """
     info['size'] = 8 
@@ -126,6 +92,7 @@ def boat_model(info):
         Column.bg_color = 'FFD9D9D9'
     return info
 
+
 def hull_space(info):
     """
     Add a space before the hull number
@@ -134,7 +101,11 @@ def hull_space(info):
         info['text'] = ' ' + info['text']
     return info
 
+
 def colors_interior(info):
+    """
+    Set font size to 8 on color interior/exterior column
+    """
     info['size'] = 8 
     return info
 
@@ -210,7 +181,6 @@ reports = {
         'name': 'All Dealer',
         'report': 'All Dealer - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -229,7 +199,6 @@ reports = {
         'name': 'Alaska Frontier Fabrication',
         'report': 'Alaska Frontier Fabrication - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -248,7 +217,6 @@ reports = {
         'name': 'Avataa',
         'report': 'Avataa - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -267,7 +235,6 @@ reports = {
         'name': 'Boat Country',
         'report': 'Boat Country - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -286,7 +253,6 @@ reports = {
         'name': 'Clemens Eugene',
         'report': 'Clemens Eugene - Boats on Order',
         'template': 'BoatsOnOrderTemplateClemens.xlsx',
-        'max_column': 9,
         'break1': 58,
         'break2': 62,
         'columns': [
@@ -306,7 +272,6 @@ reports = {
         'name': 'Clemens Portland',
         'report': 'Clemens Portland - Boats on Order',
         'template': 'BoatsOnOrderTemplateClemens.xlsx',
-        'max_column': 9,
         'break1': 58,
         'break2': 62,
         'columns': [
@@ -326,7 +291,6 @@ reports = {
         'name': 'Elephant Boys',
         'report': 'Elephant Boys - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -345,7 +309,6 @@ reports = {
         'name': 'Enns Brothers',
         'report': 'Enns Brothers - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -364,7 +327,6 @@ reports = {
         'name': 'Idaho Marine',
         'report': 'Idaho Marine - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -383,7 +345,6 @@ reports = {
         'name': 'PGM',
         'report': 'PGM - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -402,7 +363,6 @@ reports = {
         'name': 'Port Boat House',
         'report': 'Port Boat House - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -421,7 +381,6 @@ reports = {
         'name': 'RF Marina',
         'report': 'RF Marina - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -440,7 +399,6 @@ reports = {
         'name': 'The Bay Co',
         'report': 'The Bay Co - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -459,7 +417,6 @@ reports = {
         'name': 'Three Rivers',
         'report': 'Three Rivers - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -478,7 +435,6 @@ reports = {
         'name': 'Valley Marine',
         'report': 'Valley Marine - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -497,7 +453,6 @@ reports = {
         'name': 'Y Marina',
         'report': 'Y Marina - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
-        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -514,16 +469,53 @@ reports = {
 }
 
 
+# =========================================================
+# helper functions
+# =========================================================
+def log(text, error=None):
+    global log_text, errors
+    print(text)
+    log_text += text + "\n"
+    if (error):
+        errors = True
+
+def mail_results(subject, body):
+    mFrom = os.getenv('MAIL_FROM')
+    mTo = os.getenv('MAIL_TO')
+    m = Email(os.getenv('MAIL_SERVER'))
+    m.setFrom(mFrom)
+    m.addRecipient(mTo)
+    m.addCC(os.getenv('MAIL_ALSO'))
+   
+    m.setSubject(subject)
+    m.setTextBody("You should not see this text in a MIME aware reader")
+    m.setTextBody("You should not see this text in a MIME aware reader")
+    m.setHtmlBody('<pre>\n' + body + '</pre>\n')
+    m.send()
 
 
 
+
+
+# =========================================================
+# advanced date maniputlations
+# =========================================================
 def adjust_date(my_date):
+    """
+    roll date to first of the following month
+    """
     if my_date.day >= rollover:
         while my_date.day > 1:
             my_date = my_date + datedelta.DAY
     return my_date
 
+
 def start_info(value):
+    """
+    Convert dates like Jan, Jan 15, January 15, to January 
+    and Jan / Feb, Jan 15 / Feb 10, January 15 / February 10 to Jan / Feb
+    and roll to next month if the date is past rollover in .env file
+    """
     output = ''
     text_color = '000000'
     dates = value.split('/')
@@ -562,11 +554,14 @@ def start_info(value):
     return [output, text_color]
 
 
+# =========================================================
+# headers / footers and cell boarder formatting
+# =========================================================
 def normal_border(dealer, row):
-    for i in range(1, dealer['max_column'] + 1):
+    for i in range(1, len(dealer['columns']) + 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == dealer['max_column']:
+        if i == len(dealer['columns']):
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
@@ -578,15 +573,15 @@ def normal_border(dealer, row):
 def side_border(dealer, row):
     dealer['wsNew'].cell(column=1, row=row+dealer['base']).border = Border(
         left=Side(border_style='medium', color='FF000000'))
-    dealer['wsNew'].cell(column=dealer['max_column'], row=row+dealer['base']).border = Border(
+    dealer['wsNew'].cell(column=len(dealer['columns']), row=row+dealer['base']).border = Border(
         right=Side(border_style='medium', color='FF000000'))
 
 
 def heading_border(dealer, row):
-    for i in range(1, dealer['max_column'] + 1):
+    for i in range(1, len(dealer['columns']) + 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == dealer['max_column']:
+        if i == len(dealer['columns']):
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
@@ -598,10 +593,10 @@ def heading_border(dealer, row):
 
 
 def end_page_border(dealer, row):
-    for i in range(1, dealer['max_column'] + 1):
+    for i in range(1, len(dealer['columns']) + 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == dealer['max_column']:
+        if i == len(dealer['columns']):
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
@@ -612,10 +607,10 @@ def end_page_border(dealer, row):
 
 
 def bottom_border(dealer, row):
-    for i in range(1, dealer['max_column'] + 1):
+    for i in range(1, len(dealer['columns']) + 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == dealer['max_column']:
+        if i == len(dealer['columns']):
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
@@ -644,7 +639,7 @@ def set_mast_header(dealer, logo_name):
     img = Image(logo_name)
     dealer['wsNew'].add_image(img, 'B1')
     dealer['wsNew']['B5'] = dealer['name']
-    dealer['wsNew'].cell(column=dealer['max_column'], row=5).value = date
+    dealer['wsNew'].cell(column=len(dealer['columns']), row=5).value = date
 
 
 def set_header(dealer, row):
@@ -677,7 +672,7 @@ def set_footer(dealer, row):
     dealer['wsNew'].merge_cells(start_row=row+dealer['base']+2,
                       start_column=1,
                       end_row=row+dealer['base']+2,
-                      end_column= dealer['max_column'])
+                      end_column= len(dealer['columns']))
     dealer['wsNew'].cell(row=row+dealer['base']+2, column=1,
                value=("NOTE: Estimated Start & Delivery Week's can be 1 - 2 "
                       "Weeks before or after original dates"))
@@ -686,7 +681,34 @@ def set_footer(dealer, row):
     bottom_border(dealer, row+2)
 
 
-# def process_row(wsOld, wsNew, row, offset, bgColor, base):  # base 7 or base 0
+# =========================================================
+# add watermark to get colored footers on PDF
+# =========================================================
+def add_watermark(input, watermark, output):
+
+    file = open(input, 'rb')
+    reader = PdfFileReader(file)
+
+    watermark = open(watermark,'rb')
+    reader2 = PdfFileReader(watermark)
+    waterpage = reader2.getPage(0)
+
+    writer = PdfFileWriter()
+
+    for pageNum in range(0, reader.numPages):
+        page = reader.getPage(pageNum)
+        page.mergePage(waterpage)
+        writer.addPage(page)
+
+    resultFile = open(output,'wb')
+    writer.write(resultFile)
+    file.close()
+    resultFile.close()
+
+
+# =========================================================
+# process row and rows
+# =========================================================
 def process_row(dealer, row):
     for column in dealer['columns']:
         column.reset()
@@ -703,7 +725,6 @@ def process_row(dealer, row):
         cell.fill = PatternFill(start_color=column.bg(),
             end_color=column.bg(),
             fill_type="solid")
-
 
 
 def process_rows(dealer, pdf):
@@ -742,6 +763,9 @@ def process_rows(dealer, pdf):
 
 
 
+# =========================================================
+# process sheet to pdf or sheet to excel 
+# =========================================================
 def process_sheet_to_pdf(dealer):
     # change variables here
     input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx' 
@@ -786,28 +810,6 @@ def process_sheet_to_pdf(dealer):
         log('             FAILED TO ADD WATERMARK: ' + str(e), True)
 
      
-def add_watermark(input, watermark, output):
-
-    file = open(input, 'rb')
-    reader = PdfFileReader(file)
-
-    watermark = open(watermark,'rb')
-    reader2 = PdfFileReader(watermark)
-    waterpage = reader2.getPage(0)
-
-    writer = PdfFileWriter()
-
-    for pageNum in range(0, reader.numPages):
-        page = reader.getPage(pageNum)
-        page.mergePage(waterpage)
-        writer.addPage(page)
-
-    resultFile = open(output,'wb')
-    writer.write(resultFile)
-    file.close()
-    resultFile.close()
-
-
 def process_sheet_to_xlsx(dealer):
     # change variables here
     input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx' 
@@ -869,7 +871,7 @@ def send_error_report():
 
 
 def main(dealers, download, excel, pdf):
-    global api, source_dir, target_dir, rollover, one_date_fmt, two_date_fmt
+    global api, source_dir, target_dir, rollover, one_date_fmt, two_date_fmt, log_text, errors
 
     if getattr(sys, 'frozen', False):
         bundle_dir = sys._MEIPASS
@@ -881,6 +883,8 @@ def main(dealers, download, excel, pdf):
     env_path = str(Path(bundle_dir) / ".env")
     load_dotenv(dotenv_path = env_path)
 
+    log_text = ''
+    errors = False
     api = os.getenv('SMARTSHEET_API')
     source_dir = os.getenv('SOURCE_DIR')
     target_dir = os.getenv('TARGET_DIR')
@@ -933,6 +937,7 @@ def cli(download, pdf, excel, dealer, ignore):
     """converts smartsheet boats on order report to
     excel sheets and pdf files for each dealership
     """
+
     dealers = {}
     # Add dealers we want to report on
     if dealer:
