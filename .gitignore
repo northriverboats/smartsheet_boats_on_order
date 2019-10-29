@@ -1,4 +1,6 @@
 .direnv/*
+build/*
+dist/*
 venv/*
 __pycache__/*
 templates/downloads/*
