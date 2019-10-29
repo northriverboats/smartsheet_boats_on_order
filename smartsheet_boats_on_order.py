@@ -13,6 +13,7 @@ import smartsheet
 import datetime
 import glob
 import os
+import sys
 import subprocess
 import openpyxl
 import dateparser
@@ -20,76 +21,23 @@ import datedelta
 import click
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
+from pathlib import Path
+from dotenv import load_dotenv
 from emailer import *
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
 # Everybody Loves Globals
-api = os.getenv('SMARTSHEET_API')
-source_dir = os.getenv('SOURCE_DIR')
-target_dir = os.getenv('TARGET_DIR')
-rollover = int(os.getenv('ROLLOVER'))
-one_date_fmt = os.getenv('ONEDATEFMT')
-two_date_fmt = os.getenv('TWODATEFMT')
-
 log_text = ""
 errors = False
-titles = []
-order_details = 0 
-row_offset = 0
-max_column = 0
-template_file = ''
-clemens = 0
-page_number = 0
+# titles = []
+# order_details = 0 
+# row_offset = 0
+# max_column = 0
+# template_file = ''
+# clemens = 0
+# page_number = 0
 
 
-# fww drop this
-page_breaks_normal = [
-  50,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-  56,
-]
-
-page_breaks_clemens = [
-  58,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-  62,
-]
 
 # =========================================================
 # helper functions
@@ -256,6 +204,7 @@ reports = {
         'name': 'All Dealer',
         'report': 'All Dealer - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -274,6 +223,7 @@ reports = {
         'name': 'Alaska Frontier Fabrication',
         'report': 'Alaska Frontier Fabrication - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -292,6 +242,7 @@ reports = {
         'name': 'Avataa',
         'report': 'Avataa - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -310,6 +261,7 @@ reports = {
         'name': 'Boat Country',
         'report': 'Boat Country - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -328,6 +280,7 @@ reports = {
         'name': 'Clemens Eugene',
         'report': 'Clemens Eugene - Boats on Order',
         'template': 'BoatsOnOrderTemplateClemens.xlsx',
+        'max_column': 9,
         'break1': 58,
         'break2': 62,
         'columns': [
@@ -347,6 +300,7 @@ reports = {
         'name': 'Clemens Portland',
         'report': 'Clemens Portland - Boats on Order',
         'template': 'BoatsOnOrderTemplateClemens.xlsx',
+        'max_column': 9,
         'break1': 58,
         'break2': 62,
         'columns': [
@@ -366,6 +320,7 @@ reports = {
         'name': 'Elephant Boys',
         'report': 'Elephant Boys - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -384,6 +339,7 @@ reports = {
         'name': 'Enns Brothers',
         'report': 'Enns Brothers - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -402,6 +358,7 @@ reports = {
         'name': 'Idaho Marine',
         'report': 'Idaho Marine - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -420,6 +377,7 @@ reports = {
         'name': 'PGM',
         'report': 'PGM - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -438,6 +396,7 @@ reports = {
         'name': 'Port Boat House',
         'report': 'Port Boat House - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -456,6 +415,7 @@ reports = {
         'name': 'RF Marina',
         'report': 'RF Marina - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -474,6 +434,7 @@ reports = {
         'name': 'The Bay Co',
         'report': 'The Bay Co - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -492,6 +453,7 @@ reports = {
         'name': 'Three Rivers',
         'report': 'Three Rivers - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -510,6 +472,7 @@ reports = {
         'name': 'Valley Marine',
         'report': 'Valley Marine - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -528,6 +491,7 @@ reports = {
         'name': 'Y Marina',
         'report': 'Y Marina - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
+        'max_column': 8,
         'break1': 50,
         'break2': 56,
         'columns': [
@@ -593,34 +557,34 @@ def start_info(value):
 
 
 def normal_border(dealer, row):
-    for i in range(1, dealer['wsOld'].max_column - 2):
+    for i in range(1, dealer['max_column'] + 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == dealer['wsOld'].max_column - 3:
+        if i == dealer['max_column']:
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
-        dealer['wsNew'].cell(column=i, row=row+7).border = Border(
+        dealer['wsNew'].cell(column=i, row=row+dealer['base']).border = Border(
             right=Side(border_style=side1, color='FF000000'),
             left=Side(border_style=side2, color='FF000000'))
 
 
 def side_border(dealer, row):
-    dealer['wsNew'].cell(column=1, row=row+7).border = Border(
+    dealer['wsNew'].cell(column=1, row=row+dealer['base']).border = Border(
         left=Side(border_style='medium', color='FF000000'))
-    dealer['wsNew'].cell(column=dealer['wsOld'].max_column - 3, row=row+7).border = Border(
+    dealer['wsNew'].cell(column=dealer['max_column'], row=row+dealer['base']).border = Border(
         right=Side(border_style='medium', color='FF000000'))
 
 
 def heading_border(dealer, row):
-    for i in range(1, dealer['wsOld'].max_column - 2):
+    for i in range(1, dealer['max_column'] + 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == max_column - 1:
+        if i == dealer['max_column']:
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
-        dealer['wsNew'].cell(column=i, row=row+7).border = Border(
+        dealer['wsNew'].cell(column=i, row=row+dealer['base']).border = Border(
             right=Side(border_style=side1, color='FF000000'),
             left=Side(border_style=side2, color='FF000000'),
             top=Side(border_style='medium', color='FF000000'),
@@ -628,28 +592,28 @@ def heading_border(dealer, row):
 
 
 def end_page_border(dealer, row):
-    for i in range(1, dealer['wsOld'].max_column - 2):
+    for i in range(1, dealer['max_column'] + 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == dealer['wsOld'].max_column - 3:
+        if i == dealer['max_column']:
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
-        dealer['wsNew'].cell(column=i, row=row+7).border = Border(
+        dealer['wsNew'].cell(column=i, row=row+dealer['base']).border = Border(
             right=Side(border_style=side1, color='FF000000'),
             left=Side(border_style=side2, color='FF000000'),
             bottom=Side(border_style='medium', color='FF000000'))
 
 
 def bottom_border(dealer, row):
-    for i in range(1, dealer['wsOld'].max_column - 2):
+    for i in range(1, dealer['max_column'] + 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == dealer['wsOld'].max_column - 3:
+        if i == dealer['max_column']:
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
-        dealer['wsNew'].cell(column=i, row=row+7).border = Border(
+        dealer['wsNew'].cell(column=i, row=row+dealer['base']).border = Border(
             right=Side(border_style=side1, color='FF000000'),
             left=Side(border_style=side2, color='FF000000'),
             bottom=Side(border_style='medium', color='FF000000'))
@@ -670,46 +634,49 @@ def fetch_value(cell):
 
 def set_mast_header(dealer, logo_name):
     # place logo and dealername on new sheet
+    date = "Report Date: %s " % (datetime.datetime.today().strftime('%m/%d/%Y'))
     img = Image(logo_name)
     dealer['wsNew'].add_image(img, 'B1')
     dealer['wsNew']['B5'] = dealer['name']
-    dealer['wsNew']['H5'] = "Report Date: %s " % (
-        datetime.datetime.today().strftime('%m/%d/%Y'))
+    dealer['wsNew'].cell(column=dealer['max_column'], row=5).value = date
 
 
 def set_header(dealer, row):
-    heading_border(dealer['wsNew'], row)
-    dealer['wsNew'].row_dimensions[row+7].height = 21.6
+    heading_border(dealer, row)
+    dealer['wsNew'].row_dimensions[row+dealer['base']].height = 21.6
 
-    for i in range(1, dealer['wsOld'].max_column - 2):
-        dealer['wsNew'].cell(row=row+7, column=i, value=titles[i-1])
-        dealer['wsNew'].cell(row=row+7, column=i).alignment = Alignment(
-            horizontal='center', vertical='center')
-        dealer['wsNew'].cell(row=row+7, column=i).font = Font(bold=True, size=9, name='Arial')
+    for column in dealer['columns']:
+        dealer['wsNew'].cell(row=row+dealer['base'],
+                column=column.info['new'],
+                value=column.info['title'])
+        dealer['wsNew'].cell(row=row+dealer['base'],
+                column=column.info['new']).alignment = Alignment(horizontal='center', vertical='center')
+        dealer['wsNew'].cell(row=row+dealer['base'],
+                column=column.info['new']).font = Font(bold=True, size=9, name='Arial')
+
 
 
 def set_footer(dealer, row):
     side_border(dealer, row)
     side_border(dealer, row+1)
 
-    dealer['wsNew'].merge_cells(start_row=row+8,
+    dealer['wsNew'].merge_cells(start_row=row+dealer['base'] +1,
                       start_column=1,
-                      end_row=row+8,
+                      end_row=row+dealer['base']+1,
                       end_column=3)
-    dealer['wsNew'].cell(row=row+8, column=1,
-               value="Contact Joe for 9'6 build dates")
-    dealer['wsNew'].cell(row=row+8, column=1).alignment = Alignment(horizontal='center')
-    dealer['wsNew'].cell(row=row+8, column=1).font = Font(bold=True)
+    dealer['wsNew'].cell(row=row+dealer['base']+1, column=1, value="Contact Joe for 9'6 build dates")
+    dealer['wsNew'].cell(row=row+dealer['base']+1, column=1).alignment = Alignment(horizontal='center')
+    dealer['wsNew'].cell(row=row+dealer['base']+1, column=1).font = Font(bold=True)
 
-    dealer['wsNew'].merge_cells(start_row=row+9,
+    dealer['wsNew'].merge_cells(start_row=row+dealer['base']+2,
                       start_column=1,
-                      end_row=row+9,
-                      end_column= dealer['wsOld'].max_column - 3)
-    dealer['wsNew'].cell(row=row+9, column=1,
+                      end_row=row+dealer['base']+2,
+                      end_column= dealer['max_column'])
+    dealer['wsNew'].cell(row=row+dealer['base']+2, column=1,
                value=("NOTE: Estimated Start & Delivery Week's can be 1 - 2 "
                       "Weeks before or after original dates"))
-    dealer['wsNew'].cell(row=row+9, column=1).alignment = Alignment(horizontal='center')
-    dealer['wsNew'].cell(row=row+9, column=1).font = Font(bold=True)
+    dealer['wsNew'].cell(row=row+dealer['base']+2, column=1).alignment = Alignment(horizontal='center')
+    dealer['wsNew'].cell(row=row+dealer['base']+2, column=1).font = Font(bold=True)
     bottom_border(dealer, row+2)
 
 
@@ -751,12 +718,12 @@ def process_rows(dealer, pdf):
             dealer['pagelen'] = i + dealer['base']
 
         if (i + dealer['base']) % dealer['pagelen'] == 0  and dealer['wsOld'].max_row != i and pdf:
-            end_page_border(dealer['wsNew'], i + dealer['offset'])
+            end_page_border(dealer, i + dealer['offset'])
             dealer['offset'] += 1 + dealer['last_page_offset']
 
-            if i < wsOld.max_row + 1:
+            if i < dealer['wsOld'].max_row + 1:
                 dealer['offset'] += 1
-                set_header(dealer['wsNew'], i + dealer['offset'] )
+                set_header(dealer, i + dealer['offset'] )
 
             dealer['page_number'] += 1
             dealer['pagelen'] += dealer['break2']
@@ -893,11 +860,25 @@ def send_error_report():
     mail_results(subject, log_text)
 
 def main(dealers, download, excel, pdf):
-    if download:
-        download_sheets(dealers)
-    if excel or pdf:
-        process_sheets(dealers, excel, pdf)
-    """
+    global api, source_dir, target_dir, rollover, one_date_fmt, two_date_fmt
+
+    if getattr(sys, 'frozen', False):
+        bundle_dir = sys._MEIPASS
+    else:
+        bundle_dir = Path(__file__).absolute().parents[0]
+
+
+    # load environmental variables
+    env_path = str(Path(bundle_dir) / ".env")
+    load_dotenv(dotenv_path = env_path)
+
+    api = os.getenv('SMARTSHEET_API')
+    source_dir = os.getenv('SOURCE_DIR')
+    target_dir = os.getenv('TARGET_DIR')
+    rollover = int(os.getenv('ROLLOVER'))
+    one_date_fmt = os.getenv('ONEDATEFMT')
+    two_date_fmt = os.getenv('TWODATEFMT')
+
     try:
         if download:
             download_sheets(dealers)
@@ -909,7 +890,6 @@ def main(dealers, download, excel, pdf):
     if (errors):
         # send_error_report()
         pass
-    """
 
 
 @click.command()
@@ -941,8 +921,8 @@ def main(dealers, download, excel, pdf):
     help='Dealers to ignore'
 )
 def cli(download, pdf, excel, dealer, ignore):
-    """
-    stub function here
+    """converts smartsheet boats on order report to
+    excel sheets and pdf files for each dealership
     """
     dealers = {}
     # Add dealers we want to report on
