@@ -4,6 +4,11 @@ convert smartsheet boats on order reports to specially formatted execl sheets
 and pdfs
 
 pyinstaller --onefile smartsheet.spec smartsheet_boats_on_order.py
+
+To do:
+    pack template files in standalone pyinsall
+    allow reading of templete files from temp folder
+    port from OpenPyXL to XlsxWriter for RichText capability
 """
 
 import smartsheet
@@ -635,6 +640,9 @@ def heading_border(dealer, row):
 
 
 def end_page_border(dealer, row):
+    """
+    bottom border after the last detail row
+    """
     for i in range(1, len(dealer['columns']) + 1):
         side1 = 'thin'
         side2 = 'thin'
@@ -649,6 +657,9 @@ def end_page_border(dealer, row):
 
 
 def bottom_border(dealer, row):
+    """
+    bottom border at the end of the footer
+    """
     for i in range(1, len(dealer['columns']) + 1):
         side1 = 'thin'
         side2 = 'thin'
@@ -663,7 +674,9 @@ def bottom_border(dealer, row):
 
 
 def set_mast_header(dealer, logo_name):
-    # place logo and dealername on new sheet
+    """
+    place logo, deaelername and date on first page of sheet
+    """
     date = "Report Date: %s " % (
         datetime.datetime.today().strftime('%m/%d/%Y'))
     img = Image(logo_name)
@@ -673,6 +686,9 @@ def set_mast_header(dealer, logo_name):
 
 
 def set_header(dealer, row):
+    """
+    write column titles at top of page
+    """
     heading_border(dealer, row)
     dealer['wsNew'].row_dimensions[row+dealer['base']].height = 21.6
 
@@ -692,6 +708,9 @@ def set_header(dealer, row):
 
 
 def set_footer(dealer, row):
+    """
+    footer for final page of report
+    """
     side_border(dealer, row)
     side_border(dealer, row+1)
 
@@ -727,7 +746,11 @@ def set_footer(dealer, row):
 # add watermark to get colored footers on PDF
 # =========================================================
 def add_watermark(input, watermark, output):
-
+    """
+    add red and blue footer line to each page of the pdf
+    will combine the watermark with the temp pdf and save
+    as the final pdf
+    """
     file = open(input, 'rb')
     reader = PdfFileReader(file)
 
