@@ -6,8 +6,6 @@ and pdfs
 pyinstaller --onefile smartsheet.spec smartsheet_boats_on_order.py
 
 To do:
-    pack template files in standalone pyinsall
-    allow reading of templete files from temp folder
     port from OpenPyXL to XlsxWriter for RichText capability
 """
 
@@ -22,7 +20,6 @@ import datedelta
 import click
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
-from pathlib import Path
 from dotenv import load_dotenv
 from emailer import *  # noqa: F403
 from PyPDF2 import PdfFileReader, PdfFileWriter
@@ -35,6 +32,7 @@ one_date_fmt = ''
 two_date_fmt = ''
 log_text = ''
 errors = False
+is_pdf = False
 
 
 # =========================================================
@@ -110,7 +108,7 @@ def hull_space(info):
     """
     Add a space before the hull number
     """
-    if info['text']:
+    if info['text'] and is_pdf:
         info['text'] = ' ' + info['text']
     return info
 
@@ -532,6 +530,16 @@ def mail_results(subject, body):
     m.send()
 
 
+def resource_path(relative_path):
+    """ Get absolute path to resource, works for dev and for PyInstaller """
+    try:
+        base_path = sys._MEIPASS
+    except Exception:
+        base_path = os.path.abspath(".")
+
+    return os.path.join(base_path, relative_path)
+
+
 # =========================================================
 # advanced date maniputlations
 # =========================================================
@@ -868,12 +876,16 @@ def process_sheet_to_pdf(dealer):
       save resulting pdf with correct name in its final location
     """
     # change variables here
-    input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx'
-    watermark_name = source_dir + 'watermark.pdf'
-    temp_name = source_dir + 'temp.xlsx'
+    input_file = resource_path(source_dir +
+                               'downloads/' +
+                               dealer['report'] +
+                               '.xlsx')
+    watermark_name = resource_path(source_dir +
+                                   'watermark.pdf')
+    temp_name = resource_path(source_dir + 'temp.xlsx')
     pdf_dir = (target_dir + 'Formatted - PDF/')
     output_name = pdf_dir + dealer['report'] + '.pdf'
-    logo_name = source_dir + 'nrblogo1.jpg'
+    logo_name = resource_path(source_dir + 'nrblogo1.jpg')
     dealer['base'] = 7
 
     # load sheet data is coming from
@@ -881,7 +893,8 @@ def process_sheet_to_pdf(dealer):
     dealer['wsOld'] = wbOld.active
 
     # load sheet we are copying data to
-    wbNew = openpyxl.load_workbook(source_dir + dealer['template'])
+    wbNew = openpyxl.load_workbook(resource_path(source_dir +
+                                                 dealer['template']))
     dealer['wsNew'] = wbNew.active
 
     set_mast_header(dealer, logo_name)
@@ -895,7 +908,9 @@ def process_sheet_to_pdf(dealer):
         wbNew.save(output_name)
         result = subprocess.call(['/usr/local/bin/unoconv',
                                   '-f', 'pdf',
-                                  '-t', source_dir + 'landscape.ots',
+                                  '-t',
+                                  resource_path(source_dir +
+                                                'landscape.ots'),
                                   '--output=' + temp_name[:-4] + 'pdf',
                                   output_name])
         if (result):
@@ -918,9 +933,12 @@ def process_sheet_to_xlsx(dealer):
     save excel file with correct name in its final location
     """
     # change variables here
-    input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx'
+    input_file = resource_path(source_dir +
+                               'downloads/' +
+                               dealer['report'] +
+                               '.xlsx')
     output_name = target_dir + dealer['report'] + '.xlsx'
-    logo_name = source_dir + 'nrblogo1.jpg'
+    logo_name = resource_path(source_dir + 'nrblogo1.jpg')
     dealer['base'] = 7
 
     # load sheet data is coming from
@@ -928,7 +946,8 @@ def process_sheet_to_xlsx(dealer):
     dealer['wsOld'] = wbOld.active
 
     # load sheet we are copying data to
-    wbNew = openpyxl.load_workbook(source_dir + dealer['template'])
+    wbNew = openpyxl.load_workbook(resource_path(source_dir +
+                                                 dealer['template']))
     dealer['wsNew'] = wbNew.active
 
     set_mast_header(dealer, logo_name)
@@ -950,14 +969,17 @@ def process_sheets(dealers, excel, pdf):
     """
     process all dealers by creating pdf and excel files as needed
     """
+    global is_pdf
     log("\nPROCESS SHEETS ===============================")
-    os.chdir(source_dir + 'downloads/')
+    os.chdir(resource_path(source_dir + 'downloads/'))
     for dlr in sorted(dealers):
         dealer = dealers[dlr]
         # check if file exists
         if pdf:
+            is_pdf = True
             log("  converting %s to pdf" % (dealer['report']))
             process_sheet_to_pdf(dealer)
+            is_pdf = False
         if excel:
             log("  converting %s to xlsx" % (dealer['report']))
             process_sheet_to_xlsx(dealer)
@@ -976,7 +998,8 @@ def download_sheets(dealers):
         log("  downloading sheet: " + dealer['report'])
         try:
             smart.Reports.get_report_as_excel(dealer['id'],
-                                              source_dir + 'downloads')
+                                              resource_path(source_dir)
+                                              + 'downloads')
         except Exception as e:
             log('                     ERROR DOWNLOADING SHEET: ' +
                 str(e), True)
@@ -997,13 +1020,8 @@ def main(dealers, download, excel, pdf):
     global api, source_dir, target_dir, rollover, one_date_fmt, two_date_fmt
     global log_text, errors
 
-    if getattr(sys, 'frozen', False):
-        bundle_dir = sys._MEIPASS
-    else:
-        bundle_dir = Path(__file__).absolute().parents[0]
-
     # load environmental variables
-    env_path = str(Path(bundle_dir) / ".env")
+    env_path = resource_path('.env')
     load_dotenv(dotenv_path=env_path)
 
     log_text = ''
@@ -1014,6 +1032,10 @@ def main(dealers, download, excel, pdf):
     rollover = int(os.getenv('ROLLOVER'))
     one_date_fmt = os.getenv('ONEDATEFMT')
     two_date_fmt = os.getenv('TWODATEFMT')
+
+    # create download dir if necessary
+    if not os.path.exists(resource_path(source_dir + 'downloads')):
+        os.makedirs(resource_path(source_dir + 'downloads'))
 
     try:
         if download:
