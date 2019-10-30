@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 """
-convert smartsheet boats on order reports to specially formatted execl sheets and pdfs
-
-   NOTES: page lenght for all pages
-            is_clemens()  'p navs to sets the page length for the FIRST PAGE
-          process_rows()  'q navs to the first IF sets the page length for remaining pages 
-
+convert smartsheet boats on order reports to specially formatted execl sheets
+and pdfs
 """
 
 import smartsheet
 # import logging
 import datetime
-import glob
 import os
 import sys
 import subprocess
@@ -23,8 +18,17 @@ from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from pathlib import Path
 from dotenv import load_dotenv
-from emailer import *
+from emailer import *  # noqa: F403
 from PyPDF2 import PdfFileReader, PdfFileWriter
+
+api = ''
+source_dir = ''
+target_dir = ''
+rollover = 0
+one_date_fmt = ''
+two_date_fmt = ''
+log_text = ''
+errors = False
 
 
 # =========================================================
@@ -41,22 +45,22 @@ class Column:
     def __init__(self, old, new, title, function):
         self.info = {}
         self.info['text'] = ''
-        self.info['old'] = old 
+        self.info['old'] = old
         self.info['new'] = new
         self.info['title'] = title
         self.reset()
         self.function = function
 
-    def reset (self):
+    def reset(self):
         self.info['text'] = ''
         self.info['name'] = ''
         self.info['size'] = ''
-        self.info['bold'] = False 
+        self.info['bold'] = False
         self.info['italic'] = False
         self.info['color'] = ''
         self.info['bg_color'] = ''
 
-    def font (self):
+    def font(self):
         return Font(
             name=self.info['name'] or Column.name,
             size=self.info['size'] or Column.size,
@@ -65,11 +69,11 @@ class Column:
             color=self.info['color'] or Column.color
         )
 
-    def bg (self):
+    def bg(self):
         return self.info['bg_color'] or Column.bg_color
 
     def run(self):
-       self.info = self.function(self.info) 
+        self.info = self.function(self.info)
 
 
 def noop(info):
@@ -81,10 +85,10 @@ def noop(info):
 
 def boat_model(info):
     """
-    Change background color on OS and HardTops Mods super() to affect all columns that do
-    not have individual overrides
+    Change background color on OS and HardTops Mods super() to affect all
+    columns that do not have individual overrides
     """
-    info['size'] = 8 
+    info['size'] = 8
     Column.bg_color = 'FFFFFF'
     if info['text'].find("OS") != -1:
         Column.bg_color = 'FFA6A6A6'
@@ -106,8 +110,9 @@ def colors_interior(info):
     """
     Set font size to 8 on color interior/exterior column
     """
-    info['size'] = 8 
+    info['size'] = 8
     return info
+
 
 def order_details(info):
     # if info['text'].lower().find('stock') == -1:
@@ -115,9 +120,11 @@ def order_details(info):
         info['bg_color'] = 'FFFFC000'
     return info
 
+
 def start_finish(info):
     info['text'], Column.color = start_info(info['text'])
-    return info    
+    return info
+
 
 def current_phase(info):
     phases = [
@@ -138,6 +145,7 @@ def current_phase(info):
             info['text'] = phase
             break
     return info
+
 
 # =========================================================
 # default column definitions
@@ -479,22 +487,20 @@ def log(text, error=None):
     if (error):
         errors = True
 
+
 def mail_results(subject, body):
     mFrom = os.getenv('MAIL_FROM')
     mTo = os.getenv('MAIL_TO')
-    m = Email(os.getenv('MAIL_SERVER'))
+    m = Email(os.getenv('MAIL_SERVER'))  # noqa: F405
     m.setFrom(mFrom)
     m.addRecipient(mTo)
     m.addCC(os.getenv('MAIL_ALSO'))
-   
+
     m.setSubject(subject)
     m.setTextBody("You should not see this text in a MIME aware reader")
     m.setTextBody("You should not see this text in a MIME aware reader")
     m.setHtmlBody('<pre>\n' + body + '</pre>\n')
     m.send()
-
-
-
 
 
 # =========================================================
@@ -512,7 +518,7 @@ def adjust_date(my_date):
 
 def start_info(value):
     """
-    Convert dates like Jan, Jan 15, January 15, to January 
+    Convert dates like Jan, Jan 15, January 15, to January
     and Jan / Feb, Jan 15 / Feb 10, January 15 / February 10 to Jan / Feb
     and roll to next month if the date is past rollover in .env file
     """
@@ -521,7 +527,8 @@ def start_info(value):
     dates = value.split('/')
 
     # process start date
-    start = dateparser.parse(dates[0], settings={'PREFER_DATES_FROM': 'future'})
+    start = dateparser.parse(
+        dates[0], settings={'PREFER_DATES_FROM': 'future'})
 
     # check for null start date
     if not start:
@@ -544,13 +551,14 @@ def start_info(value):
 
     # process end date
     end = dateparser.parse(dates[1], settings={'PREFER_DATES_FROM': 'future'})
-    
+
     # check for null end date
     if not end:
         return [output, text_color]
 
     end_date = adjust_date(end)
-    output = start_date.strftime(two_date_fmt) + ' / ' + end_date.strftime(two_date_fmt)
+    output = (start_date.strftime(two_date_fmt) +
+              ' / ' + end_date.strftime(two_date_fmt))
     return [output, text_color]
 
 
@@ -573,7 +581,8 @@ def normal_border(dealer, row):
 def side_border(dealer, row):
     dealer['wsNew'].cell(column=1, row=row+dealer['base']).border = Border(
         left=Side(border_style='medium', color='FF000000'))
-    dealer['wsNew'].cell(column=len(dealer['columns']), row=row+dealer['base']).border = Border(
+    dealer['wsNew'].cell(column=len(dealer['columns']),
+                         row=row+dealer['base']).border = Border(
         right=Side(border_style='medium', color='FF000000'))
 
 
@@ -619,6 +628,7 @@ def bottom_border(dealer, row):
             left=Side(border_style=side2, color='FF000000'),
             bottom=Side(border_style='medium', color='FF000000'))
 
+
 def fetch_value(cell):
     value = cell.value
     if cell.data_type == 's':
@@ -635,7 +645,8 @@ def fetch_value(cell):
 
 def set_mast_header(dealer, logo_name):
     # place logo and dealername on new sheet
-    date = "Report Date: %s " % (datetime.datetime.today().strftime('%m/%d/%Y'))
+    date = "Report Date: %s " % (
+        datetime.datetime.today().strftime('%m/%d/%Y'))
     img = Image(logo_name)
     dealer['wsNew'].add_image(img, 'B1')
     dealer['wsNew']['B5'] = dealer['name']
@@ -648,36 +659,48 @@ def set_header(dealer, row):
 
     for column in dealer['columns']:
         dealer['wsNew'].cell(row=row+dealer['base'],
-                column=column.info['new'],
-                value=column.info['title'])
+                             column=column.info['new'],
+                             value=column.info['title'])
         dealer['wsNew'].cell(row=row+dealer['base'],
-                column=column.info['new']).alignment = Alignment(horizontal='center', vertical='center')
+                             column=column.info['new']).alignment = Alignment(
+                                 horizontal='center',
+                                 vertical='center')
         dealer['wsNew'].cell(row=row+dealer['base'],
-                column=column.info['new']).font = Font(bold=True, size=9, name='Arial')
-
+                             column=column.info['new']).font = Font(
+                                 bold=True,
+                                 size=9,
+                                 name='Arial')
 
 
 def set_footer(dealer, row):
     side_border(dealer, row)
     side_border(dealer, row+1)
 
-    dealer['wsNew'].merge_cells(start_row=row+dealer['base'] +1,
-                      start_column=1,
-                      end_row=row+dealer['base']+1,
-                      end_column=3)
-    dealer['wsNew'].cell(row=row+dealer['base']+1, column=1, value="Contact Joe for 9'6 build dates")
-    dealer['wsNew'].cell(row=row+dealer['base']+1, column=1).alignment = Alignment(horizontal='center')
-    dealer['wsNew'].cell(row=row+dealer['base']+1, column=1).font = Font(bold=True)
+    dealer['wsNew'].merge_cells(start_row=row+dealer['base']+1,
+                                start_column=1,
+                                end_row=row+dealer['base']+1,
+                                end_column=3)
+    dealer['wsNew'].cell(row=row + dealer['base'] + 1,
+                         column=1,
+                         value="Contact Joe for 9'6 build dates")
+    dealer['wsNew'].cell(row=row + dealer['base'] + 1,
+                         column=1).alignment = Alignment(horizontal='center')
+    dealer['wsNew'].cell(row=row + dealer['base'] + 1,
+                         column=1).font = Font(bold=True)
 
     dealer['wsNew'].merge_cells(start_row=row+dealer['base']+2,
-                      start_column=1,
-                      end_row=row+dealer['base']+2,
-                      end_column= len(dealer['columns']))
-    dealer['wsNew'].cell(row=row+dealer['base']+2, column=1,
-               value=("NOTE: Estimated Start & Delivery Week's can be 1 - 2 "
-                      "Weeks before or after original dates"))
-    dealer['wsNew'].cell(row=row+dealer['base']+2, column=1).alignment = Alignment(horizontal='center')
-    dealer['wsNew'].cell(row=row+dealer['base']+2, column=1).font = Font(bold=True)
+                                start_column=1,
+                                end_row=row+dealer['base']+2,
+                                end_column=len(dealer['columns']))
+    dealer['wsNew'].cell(row=row+dealer['base']+2,
+                         column=1,
+                         value=("NOTE: Estimated Start & Delivery Week's"
+                                "can be 1 - 2 "
+                                "Weeks before or after original dates"))
+    dealer['wsNew'].cell(row=row+dealer['base']+2,
+                         column=1).alignment = Alignment(horizontal='center')
+    dealer['wsNew'].cell(row=row+dealer['base']+2,
+                         column=1).font = Font(bold=True)
     bottom_border(dealer, row+2)
 
 
@@ -689,7 +712,7 @@ def add_watermark(input, watermark, output):
     file = open(input, 'rb')
     reader = PdfFileReader(file)
 
-    watermark = open(watermark,'rb')
+    watermark = open(watermark, 'rb')
     reader2 = PdfFileReader(watermark)
     waterpage = reader2.getPage(0)
 
@@ -700,7 +723,7 @@ def add_watermark(input, watermark, output):
         page.mergePage(waterpage)
         writer.addPage(page)
 
-    resultFile = open(output,'wb')
+    resultFile = open(output, 'wb')
     writer.write(resultFile)
     file.close()
     resultFile.close()
@@ -713,16 +736,17 @@ def process_row(dealer, row):
     for column in dealer['columns']:
         column.reset()
         cell = dealer['wsOld'].cell(column=column.info['old'], row=row)
-        column.info['text'] = fetch_value(cell) 
+        column.info['text'] = fetch_value(cell)
         column.run()
 
     for column in dealer['columns']:
-        cell = dealer['wsNew'].cell(column=column.info['new'], row=row+dealer['base']+dealer['offset'])
+        cell = dealer['wsNew'].cell(column=column.info['new'],
+                                    row=row+dealer['base']+dealer['offset'])
         cell.value = column.info['text']
         cell.font = column.font()
         cell.fill = PatternFill(start_color=column.bg(),
-            end_color=column.bg(),
-            fill_type="solid")
+                                end_color=column.bg(),
+                                fill_type="solid")
 
 
 def process_rows(dealer, pdf):
@@ -733,22 +757,26 @@ def process_rows(dealer, pdf):
     dealer['page_number'] = 0
     dealer['offset'] = 0
     dealer['last_page_offset'] = 0
-    i = 4 
+    i = 4
 
     for i in range(2, dealer['wsOld'].max_row + 1):
         process_row(dealer, i)
         # if there are not 3 lines left for footer on last page handle
-        if (i > dealer['wsOld'].max_row - 4) and (i> dealer['pagelen'] - dealer['base'] - 3) and pdf:
+        x = i > dealer['wsOld'].max_row - 4
+        y = i > dealer['pagelen'] - dealer['base'] - 3
+        if x and y and pdf:
             dealer['last_page_offset'] = 3
             dealer['pagelen'] = i + dealer['base']
 
-        if (i + dealer['base']) % dealer['pagelen'] == 0  and dealer['wsOld'].max_row != i and pdf:
+        x = (i + dealer['base']) % dealer['pagelen'] == 0
+        y = dealer['wsOld'].max_row != i
+        if x and y and pdf:
             end_page_border(dealer, i + dealer['offset'])
             dealer['offset'] += 1 + dealer['last_page_offset']
 
             if i < dealer['wsOld'].max_row + 1:
                 dealer['offset'] += 1
-                set_header(dealer, i + dealer['offset'] )
+                set_header(dealer, i + dealer['offset'])
 
             dealer['page_number'] += 1
             dealer['pagelen'] += dealer['break2']
@@ -760,13 +788,12 @@ def process_rows(dealer, pdf):
     set_footer(dealer, dealer['wsOld'].max_row + dealer['offset'])
 
 
-
 # =========================================================
-# process sheet to pdf or sheet to excel 
+# process sheet to pdf or sheet to excel
 # =========================================================
 def process_sheet_to_pdf(dealer):
     # change variables here
-    input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx' 
+    input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx'
     watermark_name = source_dir + 'watermark.pdf'
     temp_name = source_dir + 'temp.xlsx'
     pdf_dir = (target_dir + 'Formatted - PDF/')
@@ -785,16 +812,17 @@ def process_sheet_to_pdf(dealer):
     set_mast_header(dealer, logo_name)
     process_rows(dealer, True)
     range = 'A1:J'+str(dealer['wsNew'].max_row + 10)
-    wbNew.create_named_range('_xlnm.Print_Area', dealer['wsNew'], range, scope=0)
+    wbNew.create_named_range('_xlnm.Print_Area',
+                             dealer['wsNew'], range, scope=0)
 
     # save new sheet out to temp.xls and temp.pdf file
     try:
         wbNew.save(output_name)
         result = subprocess.call(['/usr/local/bin/unoconv',
-                         '-f', 'pdf',
-                         '-t', source_dir + 'landscape.ots',
-                         '--output='+ temp_name[:-4] + 'pdf',
-                         output_name])
+                                  '-f', 'pdf',
+                                  '-t', source_dir + 'landscape.ots',
+                                  '--output=' + temp_name[:-4] + 'pdf',
+                                  output_name])
         if (result):
             log('             UNICONV FAILED TO CREATE PDF', True)
     except Exception as e:
@@ -802,15 +830,17 @@ def process_sheet_to_pdf(dealer):
 
     # add watermark to temp.pdf and save to proper dealership name
     try:
-        add_watermark(temp_name[:-4] + 'pdf', watermark_name, output_name[:-3] + 'pdf')
+        add_watermark(temp_name[:-4] + 'pdf',
+                      watermark_name,
+                      output_name[:-3] + 'pdf')
         # os.remove(temp_name[:-4] + 'pdf')
     except Exception as e:
         log('             FAILED TO ADD WATERMARK: ' + str(e), True)
 
-     
+
 def process_sheet_to_xlsx(dealer):
     # change variables here
-    input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx' 
+    input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx'
     output_name = target_dir + dealer['report'] + '.xlsx'
     logo_name = source_dir + 'nrblogo1.jpg'
     dealer['base'] = 7
@@ -823,11 +853,13 @@ def process_sheet_to_xlsx(dealer):
     wbNew = openpyxl.load_workbook(source_dir + dealer['template'])
     dealer['wsNew'] = wbNew.active
 
-
     set_mast_header(dealer, logo_name)
     process_rows(dealer, False)
     range = 'A1:J'+str(dealer['wsNew'].max_row + 10)
-    wbNew.create_named_range('_xlnm.Print_Area', dealer['wsNew'], range, scope=0)
+    wbNew.create_named_range('_xlnm.Print_Area',
+                             dealer['wsNew'],
+                             range,
+                             scope=0)
 
     # save new sheet out to new file
     try:
@@ -850,6 +882,7 @@ def process_sheets(dealers, excel, pdf):
             process_sheet_to_xlsx(dealer)
         log("")
 
+
 def download_sheets(dealers):
     smart = smartsheet.Smartsheet(api)
     smart.assume_user(os.getenv('SMARTSHEET_USER'))
@@ -858,9 +891,11 @@ def download_sheets(dealers):
         dealer = dealers[dlr]
         log("  downloading sheet: " + dealer['report'])
         try:
-            smart.Reports.get_report_as_excel(dealer['id'], source_dir + 'downloads')
+            smart.Reports.get_report_as_excel(dealer['id'],
+                                              source_dir + 'downloads')
         except Exception as e:
-            log('                     ERROR DOWNLOADING SHEET: ' + str(e), True)
+            log('                     ERROR DOWNLOADING SHEET: ' +
+                str(e), True)
 
 
 def send_error_report():
@@ -869,17 +904,17 @@ def send_error_report():
 
 
 def main(dealers, download, excel, pdf):
-    global api, source_dir, target_dir, rollover, one_date_fmt, two_date_fmt, log_text, errors
+    global api, source_dir, target_dir, rollover, one_date_fmt, two_date_fmt
+    global log_text, errors
 
     if getattr(sys, 'frozen', False):
         bundle_dir = sys._MEIPASS
     else:
         bundle_dir = Path(__file__).absolute().parents[0]
 
-
     # load environmental variables
     env_path = str(Path(bundle_dir) / ".env")
-    load_dotenv(dotenv_path = env_path)
+    load_dotenv(dotenv_path=env_path)
 
     log_text = ''
     errors = False
@@ -899,8 +934,7 @@ def main(dealers, download, excel, pdf):
         log('Uncaught Error in main(): ' + str(e), True)
 
     if (errors):
-        # send_error_report()
-        pass
+        send_error_report()
 
 
 @click.command()
