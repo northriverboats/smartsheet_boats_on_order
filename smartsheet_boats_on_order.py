@@ -2,10 +2,11 @@
 """
 convert smartsheet boats on order reports to specially formatted execl sheets
 and pdfs
+
+pyinstaller --onefile smartsheet.spec smartsheet_boats_on_order.py
 """
 
 import smartsheet
-# import logging
 import datetime
 import os
 import sys
@@ -76,6 +77,9 @@ class Column:
         self.info = self.function(self.info)
 
 
+# =========================================================
+# column formatting logic
+# =========================================================
 def noop(info):
     """
     default do nothing column
@@ -115,18 +119,30 @@ def colors_interior(info):
 
 
 def order_details(info):
-    # if info['text'].lower().find('stock') == -1:
+    """
+    set background of colum to orange if there is no text
+    """
     if not info['text']:
         info['bg_color'] = 'FFFFC000'
     return info
 
 
 def start_finish(info):
+    """
+    format date as Jan/Feb or January and apply coloring
+      red for current month
+      blue for next month
+      black for all other months
+    """
     info['text'], Column.color = start_info(info['text'])
     return info
 
 
 def current_phase(info):
+    """
+    if phase contains any of the following phrases then
+    replace all text with that phrase otherwise no text at all
+    """
     phases = [
         'Waiting Production',
         'Pre-Fab',
@@ -173,12 +189,14 @@ clm_g = Column(7, 7, 'Current Phase', current_phase)
 clm_h = Column(8, 8, 'Est Start/Finish', start_finish)
 clm_i = Column(11, 9, 'Notes', noop)
 
+
 # =========================================================
 # all dealer column defintions
 # =========================================================
 all_b = Column(3, 2, 'Boat Model', boat_model)
 all_c = Column(4, 3, 'Package', noop)
 all_d = Column(12, 4, 'Colors    Interior / Exterior', colors_interior)
+
 
 # =========================================================
 # dealership definitions
@@ -481,6 +499,9 @@ reports = {
 # helper functions
 # =========================================================
 def log(text, error=None):
+    """
+    print text to screen and make log to send by email in case of error
+    """
     global log_text, errors
     print(text)
     log_text += text + "\n"
@@ -489,6 +510,9 @@ def log(text, error=None):
 
 
 def mail_results(subject, body):
+    """
+    mail log file to administrator
+    """
     mFrom = os.getenv('MAIL_FROM')
     mTo = os.getenv('MAIL_TO')
     m = Email(os.getenv('MAIL_SERVER'))  # noqa: F405
@@ -566,6 +590,9 @@ def start_info(value):
 # headers / footers and cell boarder formatting
 # =========================================================
 def normal_border(dealer, row):
+    """
+    Normal row border with thicker far left and right lines
+    """
     for i in range(1, len(dealer['columns']) + 1):
         side1 = 'thin'
         side2 = 'thin'
@@ -579,6 +606,9 @@ def normal_border(dealer, row):
 
 
 def side_border(dealer, row):
+    """
+    only far left and right sides get boarder
+    """
     dealer['wsNew'].cell(column=1, row=row+dealer['base']).border = Border(
         left=Side(border_style='medium', color='FF000000'))
     dealer['wsNew'].cell(column=len(dealer['columns']),
@@ -587,6 +617,9 @@ def side_border(dealer, row):
 
 
 def heading_border(dealer, row):
+    """
+    write out header of column titles for all but the first page
+    """
     for i in range(1, len(dealer['columns']) + 1):
         side1 = 'thin'
         side2 = 'thin'
@@ -627,20 +660,6 @@ def bottom_border(dealer, row):
             right=Side(border_style=side1, color='FF000000'),
             left=Side(border_style=side2, color='FF000000'),
             bottom=Side(border_style='medium', color='FF000000'))
-
-
-def fetch_value(cell):
-    value = cell.value
-    if cell.data_type == 's':
-        return value
-    if cell.is_date:
-        return ('%02d/%02d/%02d' % (
-            value.month,
-            value.day,
-            value.year - 2000))
-    if value is None:
-        return ''
-    return str(int(value))
 
 
 def set_mast_header(dealer, logo_name):
@@ -732,7 +751,32 @@ def add_watermark(input, watermark, output):
 # =========================================================
 # process row and rows
 # =========================================================
+def fetch_value(cell):
+    """
+    fetch cell value and convert to data type that wont choke later functions
+    """
+    value = cell.value
+    if cell.data_type == 's':
+        return value
+    if cell.is_date:
+        return ('%02d/%02d/%02d' % (
+            value.month,
+            value.day,
+            value.year - 2000))
+    if value is None:
+        return ''
+    return str(int(value))
+
+
 def process_row(dealer, row):
+    """
+    process one row by
+      resetting default formatting
+      read value of each column
+      set font and color formatting rules for column
+    after all columns have been collected
+      render each cell font and background color
+    """
     for column in dealer['columns']:
         column.reset()
         cell = dealer['wsOld'].cell(column=column.info['old'], row=row)
@@ -792,6 +836,14 @@ def process_rows(dealer, pdf):
 # process sheet to pdf or sheet to excel
 # =========================================================
 def process_sheet_to_pdf(dealer):
+    """
+    create pdf by
+      creating temporary excel file
+      load a librecalc template file to set page to landscape
+      unoconvert excel file to temporary pdf file
+      add watermark for red and blue text at bottom of page
+      save resulting pdf with correct name in its final location
+    """
     # change variables here
     input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx'
     watermark_name = source_dir + 'watermark.pdf'
@@ -839,6 +891,9 @@ def process_sheet_to_pdf(dealer):
 
 
 def process_sheet_to_xlsx(dealer):
+    """
+    save excel file with correct name in its final location
+    """
     # change variables here
     input_file = source_dir + 'downloads/' + dealer['report'] + '.xlsx'
     output_name = target_dir + dealer['report'] + '.xlsx'
@@ -869,6 +924,9 @@ def process_sheet_to_xlsx(dealer):
 
 
 def process_sheets(dealers, excel, pdf):
+    """
+    process all dealers by creating pdf and excel files as needed
+    """
     log("\nPROCESS SHEETS ===============================")
     os.chdir(source_dir + 'downloads/')
     for dlr in sorted(dealers):
@@ -884,6 +942,9 @@ def process_sheets(dealers, excel, pdf):
 
 
 def download_sheets(dealers):
+    """
+    download excel spreadsheets via the smartsheet api for further processing
+    """
     smart = smartsheet.Smartsheet(api)
     smart.assume_user(os.getenv('SMARTSHEET_USER'))
     log("DOWNLOADING SHEETS ===========================")
@@ -899,11 +960,17 @@ def download_sheets(dealers):
 
 
 def send_error_report():
+    """
+    used by try/except to send error report
+    """
     subject = 'Smartsheet Boats on Order Error Report'
     mail_results(subject, log_text)
 
 
 def main(dealers, download, excel, pdf):
+    """
+    load environmental variables then download and process spreadsheets
+    """
     global api, source_dir, target_dir, rollover, one_date_fmt, two_date_fmt
     global log_text, errors
 
