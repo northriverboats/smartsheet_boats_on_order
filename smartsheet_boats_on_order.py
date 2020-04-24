@@ -8,7 +8,6 @@ pyinstaller --onefile smartsheet.spec smartsheet_boats_on_order.py
 To do:
     port from OpenPyXL to XlsxWriter for RichText capability
 """
-
 import smartsheet
 import datetime
 import os
@@ -33,6 +32,7 @@ two_date_fmt = ''
 log_text = ''
 errors = False
 is_pdf = False
+temp_date = None
 
 
 # =========================================================
@@ -137,6 +137,8 @@ def start_finish(info):
       blue for next month
       black for all other months
     """
+    if temp_date:
+        info['text'] = temp_date
     info['text'], Column.color = start_info(info['text'])
     return info
 
@@ -165,6 +167,24 @@ def current_phase(info):
             break
     return info
 
+def set_start_date(info):
+    global temp_date
+    try:
+        temp_date = datetime.datetime.strptime(info['text'],'%m/%d/%y').strftime("%b %d")
+    except ValueError:
+        temp_date = None
+    return info
+
+def set_end_date(info):
+    global temp_date
+    if temp_date == None:
+        return info
+    try:
+        temp_date = temp_date + " / " + datetime.datetime.strptime(info['text'],'%m/%d/%y').strftime("%b %d")
+    except ValueError:
+        temp_date = None
+    return info
+
 
 # =========================================================
 # default column definitions
@@ -176,6 +196,8 @@ col_d = Column(4, 4, 'Colors    Interior / Exterior', colors_interior)
 col_e = Column(5, 5, 'Engines', noop)
 col_f = Column(6, 6, 'Current Phase', current_phase)
 col_g = Column(7, 7, 'Est Start/Finish', start_finish)
+col_g1 = Column(8, -1, 'Start Date', set_start_date)
+col_g2 = Column(9, -1, 'Start Date', set_end_date)
 col_h = Column(10, 8, 'Notes', noop)
 
 
@@ -190,6 +212,8 @@ clm_e = Column(5, 5, 'Engines', noop)
 clm_f = Column(6, 6, 'Order Details', order_details)
 clm_g = Column(7, 7, 'Current Phase', current_phase)
 clm_h = Column(8, 8, 'Est Start/Finish', start_finish)
+col_h1 = Column(9, -1, 'Start Date', set_start_date)
+col_h2 = Column(10, -1, 'Start Date', set_end_date)
 clm_i = Column(11, 9, 'Notes', noop)
 
 
@@ -219,6 +243,8 @@ reports = {
             all_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -237,6 +263,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -255,6 +283,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -273,6 +303,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -292,6 +324,8 @@ reports = {
             clm_e,
             clm_f,
             clm_g,
+            col_h1,
+            col_h2,
             clm_h,
             clm_i,
         ],
@@ -311,6 +345,8 @@ reports = {
             clm_e,
             clm_f,
             clm_g,
+            col_h1,
+            col_h2,
             clm_h,
             clm_i,
         ],
@@ -329,6 +365,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -347,6 +385,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -365,6 +405,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -383,6 +425,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -401,6 +445,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -419,6 +465,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -437,6 +485,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -455,6 +505,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -473,6 +525,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -491,6 +545,8 @@ reports = {
             col_d,
             col_e,
             col_f,
+            col_g1,
+            col_g2,
             col_g,
             col_h,
         ],
@@ -606,10 +662,10 @@ def normal_border(dealer, row):
     """
     Normal row border with thicker far left and right lines
     """
-    for i in range(1, len(dealer['columns']) + 1):
+    for i in range(1, len(dealer['columns']) - 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == len(dealer['columns']):
+        if i == len(dealer['columns']) - 2:
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
@@ -624,7 +680,7 @@ def side_border(dealer, row):
     """
     dealer['wsNew'].cell(column=1, row=row+dealer['base']).border = Border(
         left=Side(border_style='medium', color='FF000000'))
-    dealer['wsNew'].cell(column=len(dealer['columns']),
+    dealer['wsNew'].cell(column=(len(dealer['columns'])-2),
                          row=row+dealer['base']).border = Border(
         right=Side(border_style='medium', color='FF000000'))
 
@@ -633,10 +689,10 @@ def heading_border(dealer, row):
     """
     write out header of column titles for all but the first page
     """
-    for i in range(1, len(dealer['columns']) + 1):
+    for i in range(1, len(dealer['columns']) - 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == len(dealer['columns']):
+        if i == len(dealer['columns']) - 2:
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
@@ -651,10 +707,10 @@ def end_page_border(dealer, row):
     """
     bottom border after the last detail row
     """
-    for i in range(1, len(dealer['columns']) + 1):
+    for i in range(1, len(dealer['columns']) - 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == len(dealer['columns']):
+        if i == len(dealer['columns']) - 2:
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
@@ -668,10 +724,10 @@ def bottom_border(dealer, row):
     """
     bottom border at the end of the footer
     """
-    for i in range(1, len(dealer['columns']) + 1):
+    for i in range(1, len(dealer['columns']) - 1):
         side1 = 'thin'
         side2 = 'thin'
-        if i == len(dealer['columns']):
+        if i == len(dealer['columns']) - 2:
             side1 = 'medium'
         if i == 1:
             side2 = 'medium'
@@ -690,7 +746,7 @@ def set_mast_header(dealer, logo_name):
     img = Image(logo_name)
     dealer['wsNew'].add_image(img, 'B1')
     dealer['wsNew']['B5'] = dealer['name']
-    dealer['wsNew'].cell(column=len(dealer['columns']), row=5).value = date
+    dealer['wsNew'].cell(column=(len(dealer['columns']) - 2), row=5).value = date
 
 
 def set_header(dealer, row):
@@ -701,6 +757,8 @@ def set_header(dealer, row):
     dealer['wsNew'].row_dimensions[row+dealer['base']].height = 21.6
 
     for column in dealer['columns']:
+        if column.info['new'] == -1:
+            continue
         dealer['wsNew'].cell(row=row+dealer['base'],
                              column=column.info['new'],
                              value=column.info['title'])
@@ -737,7 +795,7 @@ def set_footer(dealer, row):
     dealer['wsNew'].merge_cells(start_row=row+dealer['base']+2,
                                 start_column=1,
                                 end_row=row+dealer['base']+2,
-                                end_column=len(dealer['columns']))
+                                end_column=(len(dealer['columns']) - 2))
     dealer['wsNew'].cell(row=row+dealer['base']+2,
                          column=1,
                          value=("NOTE: Estimated Start & Delivery Week's"
@@ -815,6 +873,8 @@ def process_row(dealer, row):
         column.run()
 
     for column in dealer['columns']:
+        if column.info['new'] == -1:
+            continue
         cell = dealer['wsNew'].cell(column=column.info['new'],
                                     row=row+dealer['base']+dealer['offset'])
         cell.value = column.info['text']
@@ -971,7 +1031,8 @@ def process_sheets(dealers, excel, pdf):
     """
     global is_pdf
     log("\nPROCESS SHEETS ===============================")
-    os.chdir(resource_path(source_dir + 'downloads/'))
+    if getattr(sys, 'frozen', False):
+        os.chdir(resource_path(source_dir + 'downloads/'))
     for dlr in sorted(dealers):
         dealer = dealers[dlr]
         # check if file exists
