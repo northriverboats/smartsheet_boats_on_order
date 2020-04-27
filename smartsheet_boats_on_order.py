@@ -371,10 +371,10 @@ reports = {
             col_h,
         ],
     },
-    'Errie Marine': {
+    'Erie Marine Sales': {
         'id': 6879464052287364,
         'name': 'Erie Marine Sales LLC',
-        'report': 'Erie Marine Sales LLC - Boats on Order',
+        'report': 'Erie Marine Sales LLC',
         'template': 'BoatsOnOrderTemplate.xlsx',
         'break1': 50,
         'break2': 56,
