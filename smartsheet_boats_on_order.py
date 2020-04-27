@@ -371,10 +371,10 @@ reports = {
             col_h,
         ],
     },
-    'Erie Marine Sales': {
-        'id': 6879464052287364,
-        'name': 'Erie Marine Sales LLC',
-        'report': 'Erie Marine Sales LLC',
+    'Enns Brothers': {
+        'id': 8501389329491844,
+        'name': 'Enns Brothers',
+        'report': 'Enns Brothers - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
         'break1': 50,
         'break2': 56,
@@ -391,10 +391,10 @@ reports = {
             col_h,
         ],
     },
-    'Enns Brothers': {
-        'id': 8501389329491844,
-        'name': 'Enns Brothers',
-        'report': 'Enns Brothers - Boats on Order',
+    'Erie Marine Sales LLC': {
+        'id': 6879464052287364,
+        'name': 'Erie Marine Sales LLC',
+        'report': 'Erie Marine Sales LLC - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
         'break1': 50,
         'break2': 56,
