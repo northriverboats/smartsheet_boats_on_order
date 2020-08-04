@@ -314,8 +314,8 @@ reports = {
         'name': 'Clemens Eugene',
         'report': 'Clemens Eugene - Boats on Order',
         'template': 'BoatsOnOrderTemplateClemens.xlsx',
-        'break1': 58,
-        'break2': 62,
+        'break1': 67,
+        'break2': 72,
         'columns': [
             clm_a,
             clm_b,
@@ -335,8 +335,8 @@ reports = {
         'name': 'Clemens Portland',
         'report': 'Clemens Portland - Boats on Order',
         'template': 'BoatsOnOrderTemplateClemens.xlsx',
-        'break1': 58,
-        'break2': 62,
+        'break1': 67,
+        'break2': 72,
         'columns': [
             clm_a,
             clm_b,
