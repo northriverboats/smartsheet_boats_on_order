@@ -784,23 +784,16 @@ def set_footer(dealer, row):
                                 start_column=1,
                                 end_row=row+dealer['base']+1,
                                 end_column=3)
-    dealer['wsNew'].cell(row=row + dealer['base'] + 1,
-                         column=1,
-                         value="Contact Joe for 9'6 build dates")
+    # insert left side footer here
     dealer['wsNew'].cell(row=row + dealer['base'] + 1,
                          column=1).alignment = Alignment(horizontal='center')
     dealer['wsNew'].cell(row=row + dealer['base'] + 1,
                          column=1).font = Font(bold=True)
-
     dealer['wsNew'].merge_cells(start_row=row+dealer['base']+2,
                                 start_column=1,
                                 end_row=row+dealer['base']+2,
                                 end_column=(len(dealer['columns']) - 2))
-    dealer['wsNew'].cell(row=row+dealer['base']+2,
-                         column=1,
-                         value=("NOTE: Estimated Start & Delivery Week's"
-                                "can be 1 - 2 "
-                                "Weeks before or after original dates"))
+    # insert center footer here 
     dealer['wsNew'].cell(row=row+dealer['base']+2,
                          column=1).alignment = Alignment(horizontal='center')
     dealer['wsNew'].cell(row=row+dealer['base']+2,
