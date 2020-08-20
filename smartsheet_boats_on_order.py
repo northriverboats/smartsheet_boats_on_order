@@ -937,7 +937,7 @@ def process_sheet_to_pdf(dealer):
                                    'watermark.pdf')
     temp_name = resource_path(source_dir + 'temp.xlsx')
     pdf_dir = (target_dir + 'Formatted - PDF/')
-    output_name = pdf_dir + dealer['report'] + '.pdf'
+    output_name = pdf_dir + dealer['report'] + '.xlsx'
     logo_name = resource_path(source_dir + 'nrblogo1.jpg')
     dealer['base'] = 7
 
@@ -975,7 +975,7 @@ def process_sheet_to_pdf(dealer):
     try:
         add_watermark(temp_name[:-4] + 'pdf',
                       watermark_name,
-                      output_name[:-3] + 'pdf')
+                      output_name[:-4] + 'pdf')
         # os.remove(temp_name[:-4] + 'pdf')
     except Exception as e:
         log('             FAILED TO ADD WATERMARK: ' + str(e), True)
