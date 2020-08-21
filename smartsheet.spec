@@ -4,7 +4,7 @@ block_cipher = None
 
 
 a = Analysis(['smartsheet_boats_on_order.py'],
-             pathex=['/opt/smartsheet_boats_on_order','/opt/smartsheet_boats_on_order/venv/python-venv-3.5.2/lib/python3.5/site-packages'],
+             pathex=['/opt/smartsheet_boats_on_order'],
              binaries=[],
              datas=[
                  ('.env','.'),
