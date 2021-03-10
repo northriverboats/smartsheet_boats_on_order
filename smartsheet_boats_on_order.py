@@ -11,6 +11,7 @@ To do:
 import smartsheet
 import datetime
 import os
+import shutil
 import sys
 import subprocess
 import openpyxl
@@ -576,6 +577,7 @@ def resource_path(relative_path):
     return os.path.join(base_path, relative_path)
 
 
+
 # =========================================================
 # advanced date maniputlations
 # =========================================================
@@ -946,8 +948,13 @@ def process_sheet_to_pdf(dealer):
                                                 'landscape.ots'),
                                   '--output=' + temp_name[:-4] + 'pdf',
                                   output_name])
+	# change output_name to temp_name[:-4] + '1.xlsx'
         if (result):
             log('             UNICONV FAILED TO CREATE PDF', True)
+	else:
+            # copy/move  temp_name[:-4] + '1.pdf' to  output_name[:-4]+'pdf'
+            pass
+
     except Exception as e:
         log('             FAILED TO CREATE XLSX AND PDF: ' + str(e), True)
 
