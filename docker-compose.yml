@@ -1,0 +1,9 @@
+version: "2"
+
+services:
+  python-app:
+    image: nrb-python-uniconv
+    volumes:
+      - ./:/app
+      - /samba/shares/production/Boats on Order - Smartsheet edition/:/output
+    entrypoint: [python, smartsheet_boats_on_orderpy]
