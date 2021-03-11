@@ -311,10 +311,10 @@ reports = {
             col_h,
         ],
     },
-    'Clemens Portland': {
+    'Clemens Marina': {
         'id': 7685431392266116,
-        'name': 'Clemens Portland',
-        'report': 'Clemens Portland - Boats on Order',
+        'name': 'Clemens Marina',
+        'report': 'Clemens - Boats on Order',
         'template': 'BoatsOnOrderTemplateClemens.xlsx',
         'break1': 67,
         'break2': 72,
@@ -392,10 +392,10 @@ reports = {
             col_h,
         ],
     },
-    'Idaho Marine': {
+    'Hampton Marine': {
         'id': 7533698787633028,
-        'name': 'Idaho Marine',
-        'report': 'Idaho Marine - Boats on Order',
+        'name': 'Hampton Marine',
+        'report': 'Hampton Marine LLC. - Boats on Order',
         'template': 'BoatsOnOrderTemplate.xlsx',
         'break1': 64,
         'break2': 71,
