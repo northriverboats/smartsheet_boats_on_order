@@ -13,6 +13,7 @@ import datetime
 import os
 import shutil
 import sys
+import contextlib
 import subprocess
 import openpyxl
 import dateparser
@@ -21,7 +22,7 @@ import click
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from dotenv import load_dotenv
-from emailer import *  # noqa: F403
+from emailer.emailer import Email
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
 api = ''
@@ -310,27 +311,6 @@ reports = {
             col_h,
         ],
     },
-    'Clemens Eugene': {
-        'id': 3611603372402564,
-        'name': 'Clemens Eugene',
-        'report': 'Clemens Eugene - Boats on Order',
-        'template': 'BoatsOnOrderTemplateClemens.xlsx',
-        'break1': 67,
-        'break2': 72,
-        'columns': [
-            clm_a,
-            clm_b,
-            clm_c,
-            clm_d,
-            clm_e,
-            clm_f,
-            clm_g,
-            col_h1,
-            col_h2,
-            clm_h,
-            clm_i,
-        ],
-    },
     'Clemens Portland': {
         'id': 7685431392266116,
         'name': 'Clemens Portland',
@@ -576,7 +556,10 @@ def resource_path(relative_path):
 
     return os.path.join(base_path, relative_path)
 
-
+def remove_files(*files):
+    for file in files:
+        with contextlib.suppress(FileNotFoundError):
+            os.remove(file)
 
 # =========================================================
 # advanced date maniputlations
@@ -948,12 +931,9 @@ def process_sheet_to_pdf(dealer):
                                                 'landscape.ots'),
                                   '--output=' + temp_name[:-4] + 'pdf',
                                   output_name])
-	# change output_name to temp_name[:-4] + '1.xlsx'
+        # change output_name to temp_name[:-4] + '1.xlsx'
         if (result):
             log('             UNICONV FAILED TO CREATE PDF', True)
-	else:
-            # copy/move  temp_name[:-4] + '1.pdf' to  output_name[:-4]+'pdf'
-            pass
 
     except Exception as e:
         log('             FAILED TO CREATE XLSX AND PDF: ' + str(e), True)
@@ -963,10 +943,10 @@ def process_sheet_to_pdf(dealer):
         add_watermark(temp_name[:-4] + 'pdf',
                       watermark_name,
                       output_name[:-4] + 'pdf')
-        # os.remove(temp_name[:-4] + 'pdf')
     except Exception as e:
         log('             FAILED TO ADD WATERMARK: ' + str(e), True)
-
+    finally:
+        remove_files(temp_name[:-4] + 'pdf')
 
 def process_sheet_to_xlsx(dealer):
     """
