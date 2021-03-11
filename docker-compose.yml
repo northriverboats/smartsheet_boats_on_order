@@ -6,4 +6,4 @@ services:
     volumes:
       - ./:/app
       - /samba/shares/production/Boats on Order - Smartsheet edition/:/output
-    entrypoint: [python, smartsheet_boats_on_orderpy]
+    entrypoint: [python, smartsheet_boats_on_order.py]
