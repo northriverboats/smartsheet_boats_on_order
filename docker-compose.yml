@@ -2,7 +2,7 @@ version: "2"
 
 services:
   python-app:
-    image: nrb-python-uniconv
+    image: nrb-python-unoconv
     volumes:
       - ./:/app
       - /samba/shares/production/Boats on Order - Smartsheet edition/:/output
