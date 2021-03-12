@@ -314,7 +314,7 @@ reports = {
     'Clemens Marina': {
         'id': 7685431392266116,
         'name': 'Clemens Marina',
-        'report': 'Clemens - Boats on Order',
+        'report': 'Clemens Marina - Boats on Order',
         'template': 'BoatsOnOrderTemplateClemens.xlsx',
         'break1': 67,
         'break2': 72,
