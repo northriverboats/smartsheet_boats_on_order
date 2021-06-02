@@ -34,6 +34,7 @@ two_date_fmt = ''
 log_text = ''
 errors = False
 is_pdf = False
+date_coloring = True
 temp_date = None
 
 
@@ -579,9 +580,12 @@ def start_info(value):
     Convert dates like Jan, Jan 15, January 15, to January
     and Jan / Feb, Jan 15 / Feb 10, January 15 / February 10 to Jan / Feb
     and roll to next month if the date is past rollover in .env file
+
+    If date gets past 3 months out then disable color change
     """
+    global date_coloring
     output = ''
-    text_color = '000000'
+    text_color = '000000'  # default text color black
     dates = value.split('/')
 
     # process start date
@@ -595,11 +599,15 @@ def start_info(value):
     # round up to the next month
     start_date = adjust_date(start)
 
+    # disable date coloring if date is more than 4 months from now.
+    if  start_date.month > [0,3,4,5,6,7,8,9,10,11,12,1,2,3,4,5,6][datetime.date.today().month]:
+        date_coloring = False
+
     # Set colors for this month or next month
-    if start_date.month == datetime.date.today().month:
-        text_color = 'B00000'
-    elif start_date.month == (datetime.date.today() + datedelta.MONTH).month:
-        text_color = '0000F0'
+    if start_date.month == datetime.date.today().month and date_coloring:
+        text_color = 'B00000'  # text color red
+    elif start_date.month == (datetime.date.today() + datedelta.MONTH).month and date_coloring:
+        text_color = '0000F0'  # text color blue
     # set output in case we are only outputting a start date
     output = start_date.strftime(one_date_fmt)
 
@@ -990,6 +998,7 @@ def process_sheets(dealers, excel, pdf):
     process all dealers by creating pdf and excel files as needed
     """
     global is_pdf
+    global date_coloring 
     log("\nPROCESS SHEETS ===============================")
     if getattr(sys, 'frozen', False):
         os.chdir(resource_path(source_dir + 'downloads/'))
@@ -998,6 +1007,7 @@ def process_sheets(dealers, excel, pdf):
         # check if file exists
         if pdf:
             is_pdf = True
+            date_coloring = True
             log("  converting %s to pdf" % (dealer['report']))
             process_sheet_to_pdf(dealer)
             is_pdf = False
