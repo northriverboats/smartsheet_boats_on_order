@@ -8,9 +8,9 @@ et-xmlfile==1.0.1
 idna==2.8
 jdcal==1.4.1
 openpyxl==2.6.4
-Pillow==6.2.1
+Pillow==8.1.2
 pkg-resources==0.0.0
-PyInstaller==3.5
+PyInstaller==3.6
 PyPDF2==1.26.0
 python-dateutil==2.8.0
 python-dotenv==0.10.3
@@ -21,4 +21,4 @@ requests-toolbelt==0.9.1
 six==1.12.0
 smartsheet-python-sdk==2.83.0
 tzlocal==2.0.0
-urllib3==1.25.6
+urllib3==1.26.5
