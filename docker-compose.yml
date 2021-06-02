@@ -3,6 +3,8 @@ version: "2"
 services:
   python-app:
     image: nrb-python-unoconv
+    environment:
+      - TZ=America/Los_Angeles
     volumes:
       - ./:/app
       - /samba/shares/production/Boats on Order - Smartsheet edition/:/output
