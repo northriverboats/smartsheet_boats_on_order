@@ -4,14 +4,14 @@ block_cipher = None
 
 
 a = Analysis(['smartsheet_boats_on_order.py'],
-             pathex=['/opt/smartsheet_boats_on_order'],
+             pathex=['/home/fwarren/builds/smartsheet_boats_on_order'],
              binaries=[],
              datas=[
                  ('.env','.'),
                  ('templates','templates'),
                  ('templates/downloads','templates/downloads'),
              ],
-             hiddenimports=['smartsheet.reports'],
+             hiddenimports=['smartsheet.reports','emailer.emailer'],
              hookspath=[],
              runtime_hooks=[],
              excludes=[],
