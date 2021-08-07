@@ -930,7 +930,7 @@ def process_sheet_to_pdf(dealer):
                                    'watermark.pdf')
     temp_name = resource_path(source_dir + 'temp.xlsx')
     pdf_dir = (target_dir + 'Formatted - PDF/')
-    output_name = pdf_dir + dealer['report'] + '.xlsx'
+    output_name = pdf_dir + dealer['report'].replace('.','') + '.xlsx'
     logo_name = resource_path(source_dir + 'nrblogo1.jpg')
     dealer['base'] = 7
 
@@ -985,7 +985,7 @@ def process_sheet_to_xlsx(dealer):
                                'downloads/' +
                                dealer['report'] +
                                '.xlsx')
-    output_name = target_dir + dealer['report'] + '.xlsx'
+    output_name = target_dir + dealer['report'].replace('.','') + '.xlsx'
     logo_name = resource_path(source_dir + 'nrblogo1.jpg')
     dealer['base'] = 7
 
