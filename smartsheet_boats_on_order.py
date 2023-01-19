@@ -550,24 +550,6 @@ def log(text, error=None):
         errors = True
 
 
-def mail_results(subject, body):
-    """
-    mail log file to administrator
-    """
-    mFrom = os.getenv('MAIL_FROM')
-    mTo = os.getenv('MAIL_TO')
-    m = Email(os.getenv('MAIL_SERVER'))  # noqa: F405
-    m.setFrom(mFrom)
-    m.addRecipient(mTo)
-    m.addCC(os.getenv('MAIL_ALSO'))
-
-    m.setSubject(subject)
-    m.setTextBody("You should not see this text in a MIME aware reader")
-    m.setTextBody("You should not see this text in a MIME aware reader")
-    m.setHtmlBody('<pre>\n' + body + '</pre>\n')
-    m.send()
-
-
 def resource_path(relative_path):
     """ Get absolute path to resource, works for dev and for PyInstaller """
     try:
@@ -952,7 +934,7 @@ def process_sheet_to_pdf(dealer):
     # save new sheet out to temp.xls and temp.pdf file
     try:
         wbNew.save(output_name)
-        result = subprocess.call(['/usr/local/bin/unoconv',
+        result = subprocess.call(['/usr/bin/unoconv',
                                   '-f', 'pdf',
                                   '-t',
                                   resource_path(source_dir +
@@ -1061,7 +1043,7 @@ def send_error_report():
     used by try/except to send error report
     """
     subject = 'Smartsheet Boats on Order Error Report'
-    mail_results(subject, log_text)
+    mail_results(subject, "<pre>\n" + log_text + "</pre>\n")
 
 
 def main(dealers, download, excel, pdf):
