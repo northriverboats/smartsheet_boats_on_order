@@ -22,7 +22,7 @@ import click
 from openpyxl.drawing.image import Image
 from openpyxl.styles import PatternFill, Border, Side, Alignment, Font
 from dotenv import load_dotenv
-from emailer.emailer import Email
+from emailer import mail_results
 from PyPDF2 import PdfFileReader, PdfFileWriter
 
 api = ''
